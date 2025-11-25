@@ -11,6 +11,9 @@ Graph::Graph(std::ifstream &input){
     std::istringstream iss2(line);
     iss2 >> l >> m;
     adj = std::vector<std::vector<std::pair<int,double>>>(n);
+    D = std::vector<std::vector<double>> (n+1, std::vector<double>(n, INF));
+    P = std::vector<std::vector<int>> (n+1, std::vector<int>(n, -1));
+    min_mean_cycle = std::vector<int>(n, -1);
 
     for(int i = 0; i < m; i++){
         std::getline(input, line);
@@ -34,12 +37,11 @@ void Graph::print_graph(){
     }
 }
 
-float Graph::min_cycle_mean(bool early_termination){
+float Graph::min_cycle_mean(bool early_termination, std::ofstream& output2){
     int s = 0;
-    D = std::vector<std::vector<double>> (n+1, std::vector<double>(n, INF));
-    P = std::vector<std::vector<int>> (n+1, std::vector<int>(n, -1));
     std::vector<double> pi(n, INF);
     D[0][s] = 0;
+    int pred;
 
     for(int k = 1; k <= n; k++){
         #ifdef DEBUG
@@ -51,7 +53,7 @@ float Graph::min_cycle_mean(bool early_termination){
                 double w = (double)edge.second;
                 if(D[k][v] > D[k-1][u] + w){
                     D[k][v] = D[k-1][u] + w;
-                    P[k][v] = u;
+                    P[k][v] = u+1;
                 }
             }
         }
@@ -60,13 +62,20 @@ float Graph::min_cycle_mean(bool early_termination){
             std::cout << D[k][u] << " ";
         }
         std::cout << std::endl;
+        std::cout << "P ROW " << k << ": ";
+        for(int u = 0; u < n; u++){
+            std::cout << P[k][u] << " ";
+        }
+        std::cout << std::endl << std::endl;
         #endif
+
 
         if (early_termination && (k & (k - 1)) == 0) {
             #ifdef DEBUG
             std::cout << "checking early termination" <<std::endl;
             #endif
             double lambda_k = INF;
+            pred = -1;
             //Compute lambda_k
             for(int i = 0; i < n; i++){
                 if(std::isinf(D[k][i])){
@@ -80,6 +89,7 @@ float Graph::min_cycle_mean(bool early_termination){
                 }
                 if (lambda_k_v < lambda_k){
                     lambda_k = lambda_k_v;
+                    pred = i;
                     #ifdef DEBUG
                     std::cout << "Updated lambda_k to " << lambda_k << std::endl;
                     #endif
@@ -117,19 +127,23 @@ float Graph::min_cycle_mean(bool early_termination){
                     double w = (double)edge.second;
                     if(pi[v] > pi[iu] + w - lambda_k){
                         terminate = false;
+                        break;
                     }
                 }
+                if(!terminate) break;
             }
             if(terminate){
                 #ifdef DEBUG
                 std::cout << "terminating at k = " << k << std::endl;
                 #endif
+                calc_min_mean_cycle(pred, k, output2);
                 return (float) lambda_k;
             }
         }
     }
     double mean = INF;
 
+    pred = -1;
     for(int v = 0; v < n; v++){
         if(std::isinf(D[n][v])){
             continue;
@@ -142,11 +156,29 @@ float Graph::min_cycle_mean(bool early_termination){
         }
         if (v_mean < mean){
             mean = v_mean;
+            pred = v;
         }
+        // std::cout << pred+1 << std::endl;
         // std::cout << mean << std::endl;
     }
-
+    calc_min_mean_cycle(pred, n, output2);
     return (float)mean;
+}
+
+void Graph::calc_min_mean_cycle(int v, int k, std::ofstream& out){
+    int idx = 0;
+    int start = v;
+    for(int i = k; i >= 0; i--){
+        // out << v+1 << " ";
+        min_mean_cycle[idx++] = v;
+        v = P[i][v]-1;
+        if (v == start) break;
+    }
+    for (int i = idx-1; i >= 0; i--){
+        out << min_mean_cycle[i]+1;
+        if (i != 0) out << " ";
+    }
+    out << std::endl;
 }
 
 Graph::~Graph(){

@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
+    std::ofstream output2(argv[3]);
 
 
 
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]){
     #endif
 
     #ifndef DEBUG
-    mean = g.min_cycle_mean(true);
+    mean = g.min_cycle_mean(true, output2);
     #endif
 
     // std::cout << mean << std::endl;
