@@ -39,7 +39,7 @@ void Graph::print_graph(){
 
 float Graph::min_cycle_mean(bool early_termination, std::ofstream& output2){
     int s = 0;
-    std::vector<double> pi(n, INF);
+    pi = std::vector<double>(n, INF);
     D[0][s] = 0;
     int pred;
 
@@ -70,7 +70,7 @@ float Graph::min_cycle_mean(bool early_termination, std::ofstream& output2){
         #endif
 
 
-        if (early_termination && (k & (k - 1)) == 0) {
+        if ((early_termination && (k & (k - 1)) == 0) || k == n) {
             #ifdef DEBUG
             std::cout << "checking early termination" <<std::endl;
             #endif
@@ -132,53 +132,83 @@ float Graph::min_cycle_mean(bool early_termination, std::ofstream& output2){
                 }
                 if(!terminate) break;
             }
-            if(terminate){
+            if(terminate || k == n){
                 #ifdef DEBUG
                 std::cout << "terminating at k = " << k << std::endl;
                 #endif
+                lambda = lambda_k;
                 calc_min_mean_cycle(pred, k, output2);
                 return (float) lambda_k;
             }
         }
     }
-    double mean = INF;
-
-    pred = -1;
-    for(int v = 0; v < n; v++){
-        if(std::isinf(D[n][v])){
-            continue;
-        }
-        double v_mean = -INF;
-        for(int k = 0; k < n; k++){
-            if(v_mean < (D[n][v] - D[k][v])/(n-k)){
-                v_mean = (D[n][v] - D[k][v])/(n-k);
-            }
-        }
-        if (v_mean < mean){
-            mean = v_mean;
-            pred = v;
-        }
-        // std::cout << pred+1 << std::endl;
-        // std::cout << mean << std::endl;
-    }
-    calc_min_mean_cycle(pred, n, output2);
-    return (float)mean;
+    return 0;
 }
 
-void Graph::calc_min_mean_cycle(int v, int k, std::ofstream& out){
-    int idx = 0;
-    int start = v;
-    for(int i = k; i >= 0; i--){
-        // out << v+1 << " ";
-        min_mean_cycle[idx++] = v;
-        v = P[i][v]-1;
-        if (v == start) break;
+void Graph::calc_min_mean_cycle(int v, int k, std::ofstream& out) {
+    const double TOL = 1e-9;
+    
+    std::vector<std::vector<int>> zero_adj(n);
+    for (int u = 0; u < n; ++u) {
+        if (std::isinf(pi[u])) continue;
+        for (auto &e : adj[u]) {
+            int vv = e.first;
+            double w = e.second;
+            if (std::isinf(pi[vv])) continue;
+            double r = w - lambda + pi[u] - pi[vv];
+            if (std::fabs(r) <= TOL) {
+                zero_adj[u].push_back(vv);
+            }
+        }
     }
-    for (int i = idx-1; i >= 0; i--){
-        out << min_mean_cycle[i]+1;
-        if (i != 0) out << " ";
+
+    std::vector<int> visited(n, 0), instack(n, 0), parent(n, -1);
+    std::vector<int> result_cycle;
+    bool found = false;
+
+    std::function<void(int)> dfs = [&](int u) {
+        if (found) return;
+        visited[u] = 1;
+        instack[u] = 1;
+        for (int wv : zero_adj[u]) {
+            if (!visited[wv]) {
+                parent[wv] = u;
+                dfs(wv);
+                if (found) return;
+            } else if (instack[wv]) {
+                found = true;
+                std::vector<int> cyc;
+
+                int x = u;
+                cyc.push_back(wv);
+                while (x != wv && x != -1) {
+                    cyc.push_back(x);
+                    x = parent[x];
+                }
+
+                std::reverse(cyc.begin(), cyc.end());
+
+                if (!cyc.empty() && cyc.front() == cyc.back())
+                    cyc.pop_back();
+
+                result_cycle = cyc;
+                return;
+            }
+        }
+        instack[u] = 0;
+    };
+
+    for (int u = 0; u < n && !found; ++u) {
+        if (!visited[u]) dfs(u);
     }
-    out << std::endl;
+
+    if (!result_cycle.empty()) {
+        for(int i = 0; i < (int)result_cycle.size(); i++){
+            out << (result_cycle[i] + 1);
+            if(i != (int)result_cycle.size()-1) out << " ";
+        }
+        out << "\n";
+    }
 }
 
 Graph::~Graph(){

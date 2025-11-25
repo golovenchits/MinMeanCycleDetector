@@ -11,7 +11,7 @@
 #include <limits>
 #include <cmath>
 
-#define INF std::numeric_limits<float>::infinity()
+#define INF std::numeric_limits<double>::infinity()
 
 class Graph{
     public:
@@ -20,7 +20,8 @@ class Graph{
         void print_graph();
         float min_cycle_mean(bool, std::ofstream&);
         void calc_min_mean_cycle(int, int, std::ofstream&);
-        
+        double lambda;
+
 
     private:
         int n;
@@ -29,5 +30,8 @@ class Graph{
         std::vector<std::vector<double>> D;
         std::vector<std::vector<int>> P;
         std::vector<int> min_mean_cycle;
+        std::vector<double> dist;
+        std::vector<double> pi;
+
 
 };
