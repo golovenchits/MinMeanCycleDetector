@@ -35,30 +35,38 @@ void Graph::print_graph(){
 
 float Graph::min_cycle_mean(){
     int s = 0;
-    std::vector<std::vector<double>> D(n+1, std::vector<double>(n));
-    for(int k = 0; k <= n; k++){
-        for(int v = 0; v < n; v++){
-            D[k][v] = INF;
-        }
-    }
+    std::vector<std::vector<double>> D(n+1, std::vector<double>(n, INF));
     D[0][s] = 0;
 
+    int last_k = 0;
+
     for(int k = 1; k <= n; k++){
-        // may have to change how the adj is set up for time complexity
         // std::cout << "D ROW" << k << ": ";
         for(int u = 0; u < n; u++){
             for(std::pair<int,double> edge: adj[u]){
                 int v = edge.first;
                 double w = (double)edge.second;
-                if(D[k][v] > D[k-1][u] + w){
+                if(D[k][v] > D[k-1][u] + w)
                     D[k][v] = D[k-1][u] + w;
-                }
-                // std::cout << D[k][v] << " ";
-
             }
         }
-        // std::cout << std::endl;
+
+        if ((k & (k - 1)) == 0) {
+            bool converged = true;
+            for (int v = 0; v < n; v++) {
+                if (std::abs(D[k][v] - D[last_k][v]) > 1e-9) {
+                    converged = false;
+                    break;
+                }
+            }
+            if (converged) {
+                break;
+            }
+            last_k = k;
+        }
+
     }
+
     double mean = INF;
 
     for(int v = 0; v < n; v++){

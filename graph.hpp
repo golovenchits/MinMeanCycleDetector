@@ -11,7 +11,7 @@
 #include <limits>
 #include <cmath>
 
-#define INF std::numeric_limits<float>::infinity();
+#define INF std::numeric_limits<float>::infinity()
 
 class Graph{
     public:
