@@ -1,2 +1,4 @@
 pa3
 .vscode/
+*.mcm
+*.cycle

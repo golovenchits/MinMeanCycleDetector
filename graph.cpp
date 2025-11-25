@@ -9,28 +9,75 @@ Graph::Graph(std::ifstream &input){
     std::getline(input, line);
     std::istringstream iss2(line);
     iss2 >> l >> m;
-    adj = std::vector<std::vector<std::pair<int,int>>>(n);
+    adj = std::vector<std::vector<std::pair<int,double>>>(n);
 
     for(int i = 0; i < m; i++){
         std::getline(input, line);
         std::istringstream iss(line);
 
         int u, v;
-        float w;
+        double w;
 
         iss >> u >> v >> w;
-        adj[u-1].push_back({v, w});
+        adj[u-1].push_back({v-1, w});
     }
 }
 
 void Graph::print_graph(){
     for(int i = 0; i < n; i++){
         std::cout << "Edges for node " << i+1 << std::endl;
-        for(std::pair<int,int> edge: adj[i]){
+        for(std::pair<int,double> edge: adj[i]){
             std::cout << "(" << i+1 << "," << edge.first << ")=" << edge.second << " ";
         }
         std::cout << std::endl;
     }
+}
+
+float Graph::min_cycle_mean(){
+    int s = 0;
+    std::vector<std::vector<double>> D(n+1, std::vector<double>(n));
+    for(int k = 0; k <= n; k++){
+        for(int v = 0; v < n; v++){
+            D[k][v] = INF;
+        }
+    }
+    D[0][s] = 0;
+
+    for(int k = 1; k <= n; k++){
+        // may have to change how the adj is set up for time complexity
+        // std::cout << "D ROW" << k << ": ";
+        for(int u = 0; u < n; u++){
+            for(std::pair<int,double> edge: adj[u]){
+                int v = edge.first;
+                double w = (double)edge.second;
+                if(D[k][v] > D[k-1][u] + w){
+                    D[k][v] = D[k-1][u] + w;
+                }
+                // std::cout << D[k][v] << " ";
+
+            }
+        }
+        // std::cout << std::endl;
+    }
+    double mean = INF;
+
+    for(int v = 0; v < n; v++){
+        if(std::isinf(D[n][v])){
+            continue;
+        }
+        double v_mean = -INF;
+        for(int k = 0; k < n; k++){
+            if(v_mean < (D[n][v] - D[k][v])/(n-k)){
+                v_mean = (D[n][v] - D[k][v])/(n-k);
+            }
+        }
+        if (v_mean < mean){
+            mean = v_mean;
+        }
+        // std::cout << mean << std::endl;
+    }
+
+    return (float)mean;
 }
 
 Graph::~Graph(){
