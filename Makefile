@@ -1,6 +1,13 @@
 pa3: clean
 	g++ -std=c++17 -Wall -Wshadow --pedantic -Wvla *.cpp -g -o pa3 -O3
 
+pa3-debug: clean
+	g++ -std=c++17 -Wall -Wshadow --pedantic -Wvla *.cpp -g -o pa3 -O3 -DDEBUG -DCOMPARE
+
+pa3-compare: clean
+	g++ -std=c++17 -Wall -Wshadow --pedantic -Wvla *.cpp -g -o pa3 -O3 -DCOMPARE
+
+
 clean:
 	rm -f pa3
 

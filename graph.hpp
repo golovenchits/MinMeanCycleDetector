@@ -18,11 +18,14 @@ class Graph{
         Graph(std::ifstream& input);
         ~Graph();
         void print_graph();
-        float min_cycle_mean();
+        float min_cycle_mean(bool);
+        
 
     private:
         int n;
         int m;
         std::vector<std::vector<std::pair<int,double>>> adj;
+        std::vector<std::vector<double>> D;
+        std::vector<std::vector<int>> P;
 
 };

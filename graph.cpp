@@ -1,4 +1,5 @@
 #include "graph.hpp"
+// #define DEBUG
 
 Graph::Graph(std::ifstream &input){
     std::string line;
@@ -18,8 +19,8 @@ Graph::Graph(std::ifstream &input){
         int u, v;
         double w;
 
-        iss >> u >> v >> w;
-        adj[u-1].push_back({v-1, w});
+        iss >> v >> u >> w;
+        adj[v-1].push_back({u-1, w});
     }
 }
 
@@ -33,40 +34,100 @@ void Graph::print_graph(){
     }
 }
 
-float Graph::min_cycle_mean(){
+float Graph::min_cycle_mean(bool early_termination){
     int s = 0;
-    std::vector<std::vector<double>> D(n+1, std::vector<double>(n, INF));
+    D = std::vector<std::vector<double>> (n+1, std::vector<double>(n, INF));
+    P = std::vector<std::vector<int>> (n+1, std::vector<int>(n, -1));
+    std::vector<double> pi(n, INF);
     D[0][s] = 0;
 
-    int last_k = 0;
-
     for(int k = 1; k <= n; k++){
-        // std::cout << "D ROW" << k << ": ";
+        #ifdef DEBUG
+        std::cout << "D ROW" << k << ": ";
+        #endif
         for(int u = 0; u < n; u++){
             for(std::pair<int,double> edge: adj[u]){
                 int v = edge.first;
                 double w = (double)edge.second;
-                if(D[k][v] > D[k-1][u] + w)
+                if(D[k][v] > D[k-1][u] + w){
                     D[k][v] = D[k-1][u] + w;
-            }
-        }
-
-        if ((k & (k - 1)) == 0) {
-            bool converged = true;
-            for (int v = 0; v < n; v++) {
-                if (std::abs(D[k][v] - D[last_k][v]) > 1e-9) {
-                    converged = false;
-                    break;
+                    P[k][v] = u;
                 }
             }
-            if (converged) {
-                break;
-            }
-            last_k = k;
         }
+        #ifdef DEBUG
+        for(int u = 0; u < n; u++){
+            std::cout << D[k][u] << " ";
+        }
+        std::cout << std::endl;
+        #endif
 
+        if (early_termination && (k & (k - 1)) == 0) {
+            #ifdef DEBUG
+            std::cout << "checking early termination" <<std::endl;
+            #endif
+            double lambda_k = INF;
+            //Compute lambda_k
+            for(int i = 0; i < n; i++){
+                if(std::isinf(D[k][i])){
+                    continue;
+                }
+                double lambda_k_v = -INF;
+                for(int j = 0; j < k; j++){
+                    if(lambda_k_v < (D[k][i] - D[j][i])/(k-j)){
+                        lambda_k_v = (D[k][i] - D[j][i])/(k-j);
+                    }
+                }
+                if (lambda_k_v < lambda_k){
+                    lambda_k = lambda_k_v;
+                    #ifdef DEBUG
+                    std::cout << "Updated lambda_k to " << lambda_k << std::endl;
+                    #endif
+                }
+            }
+            // probably correct up to here
+            #ifdef DEBUG
+            std::cout << "lambda_k = " << lambda_k << std::endl;
+            #endif
+            if (std::isinf(lambda_k)) continue;
+            // Compute pi(v)
+            for(int iv = 0; iv < n; iv++){
+                double pi_k = INF;
+                for (int j = 0; j <= k; j++){
+                    if(pi_k > D[j][iv] - (j * lambda_k)){
+                        pi_k =  D[j][iv] - (j * lambda_k);
+                    }
+                }
+                if(pi_k < pi[iv]){
+                    pi[iv] = pi_k;
+                }
+            }
+            #ifdef DEBUG
+            std::cout << "PI: ";
+            for(int iv = 0; iv < n; iv++){
+                std::cout<< pi[iv] << " ";
+            }
+            std::cout <<std::endl;
+            #endif
+            
+            bool terminate = true;
+            for(int iu = 0; iu < n; iu++){
+                for(std::pair<int,double> edge: adj[iu]){
+                    int v = edge.first;
+                    double w = (double)edge.second;
+                    if(pi[v] > pi[iu] + w - lambda_k){
+                        terminate = false;
+                    }
+                }
+            }
+            if(terminate){
+                #ifdef DEBUG
+                std::cout << "terminating at k = " << k << std::endl;
+                #endif
+                return (float) lambda_k;
+            }
+        }
     }
-
     double mean = INF;
 
     for(int v = 0; v < n; v++){
