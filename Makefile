@@ -37,4 +37,4 @@ test500:
 	./pa3 examples/500_2000.gr 500_2000.mcm 500_2000.cycle
 
 memcheck:
-	valgrind -s --leak-check=full --track-origins=yes ./pa3 examples/7_8.gr 7_8.mcm 7_8.cycle
+	valgrind -s --leak-check=full --track-origins=yes ./pa3 examples/500_2000.gr 500_2000.mcm 500_2000.cycle

@@ -62,11 +62,11 @@ float Graph::min_cycle_mean(bool early_termination, std::ofstream& output2){
             std::cout << D[k][u] << " ";
         }
         std::cout << std::endl;
-        std::cout << "P ROW " << k << ": ";
-        for(int u = 0; u < n; u++){
-            std::cout << P[k][u] << " ";
-        }
-        std::cout << std::endl << std::endl;
+        // std::cout << "P ROW " << k << ": ";
+        // for(int u = 0; u < n; u++){
+        //     std::cout << P[k][u] << " ";
+        // }
+        // std::cout << std::endl << std::endl;
         #endif
 
 

@@ -41,6 +41,7 @@ int main(int argc, char* argv[]){
     // std::cout << mean << std::endl;
     fwrite(&mean, sizeof(float), 1, fptr1);
     fclose(fptr1);
+    output2.close();
 
     return EXIT_SUCCESS;
 }
