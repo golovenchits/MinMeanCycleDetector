@@ -32,6 +32,9 @@ class Graph{
         std::vector<int> min_mean_cycle;
         std::vector<double> dist;
         std::vector<double> pi;
+        std::vector<int> level_array;
+        std::vector<int> level_stack;
+        double calc_lambda_path(int k, int v_start, double lambda_min);
 
 
 };
